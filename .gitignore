@@ -1,23 +1,53 @@
-logs
+# Logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+firestore-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Dependencias
+node_modules/
+dist/
+dist-ssr/
 *.local
 
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+*.json.secret
+*-firebase-adminsdk-*.json
+serviceAccountKey.json
+
+# Vite
+vite.config.ts.timestamp-*
+
+# Android / Capacitor
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/.idea/
+android/capacitor-cordova-android-plugins/
+android/app/src/main/assets/public/
+
+# Editores e IDEs
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+!.vscode/settings.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-.env
+*.swo
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
