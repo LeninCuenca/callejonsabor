@@ -51,6 +51,58 @@ if (process.env.FIRESTORE_EMULATOR_HOST) {
   db = admin.firestore();
 }
 
+/*
+ * El menú canónico del restaurante vive en shared/menu.json (carpeta raíz del
+ * proyecto), de modo que app-web y app-flutter usen la misma lista de productos.
+ * Si el archivo no existe, se usa la lista de respaldo de abajo.
+ */
+function loadMenu() {
+  const menuPath = path.resolve(__dirname, '..', '..', 'shared', 'menu.json');
+
+  if (!fs.existsSync(menuPath)) {
+    console.warn(`No se encontró ${menuPath}; usando menú de respaldo.`);
+    return FALLBACK_MENU;
+  }
+
+  const menu = JSON.parse(fs.readFileSync(menuPath, 'utf8'));
+  const productos = Array.isArray(menu.productos) ? menu.productos : [];
+
+  if (productos.length === 0) {
+    console.warn(`shared/menu.json no tiene productos; usando menú de respaldo.`);
+    return FALLBACK_MENU;
+  }
+
+  console.log(`Usando menú compartido: ${menuPath} (${productos.length} productos)`);
+  return productos.map(p => ({
+    name: p.name,
+    price: p.price,
+    category: p.category,
+    requires_packaging: p.requires_packaging,
+    stock: p.stock
+  }));
+}
+
+const FALLBACK_MENU = [
+  { name: 'Filete de Pollo', price: 2.5, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
+  { name: 'Chuleta de Cerdo', price: 3.5, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
+  { name: 'Costilla de Cerdo', price: 4.0, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
+  { name: 'Presa de Pollo', price: 2.5, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
+  { name: 'Pincho de Camarón', price: 3.5, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
+  { name: 'Papi Pollo', price: 2.5, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
+  { name: 'Salchipapa', price: 1.5, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
+  { name: 'Choclo Asado', price: 1.5, category: 'PLATOS FUERTES', requires_packaging: false, stock: 50 },
+  { name: 'Papa', price: 1.0, category: 'PORCIONES', requires_packaging: false, stock: 50 },
+  { name: 'Arroz', price: 1.0, category: 'PORCIONES', requires_packaging: false, stock: 50 },
+  { name: 'Menestra', price: 1.0, category: 'PORCIONES', requires_packaging: false, stock: 50 },
+  { name: 'Jarra de Horchata', price: 3.0, category: 'BEBIDAS', requires_packaging: false, stock: 50 },
+  { name: '1/2 Jarra de Horchata', price: 1.5, category: 'BEBIDAS', requires_packaging: false, stock: 50 },
+  { name: 'Vaso de Horchata', price: 0.5, category: 'BEBIDAS', requires_packaging: false, stock: 50 },
+  { name: 'Café', price: 0.75, category: 'BEBIDAS', requires_packaging: false, stock: 50 },
+  { name: 'Cola Personal', price: 0.75, category: 'BEBIDAS', requires_packaging: false, stock: 50 },
+  { name: 'Cola de Litro', price: 1.25, category: 'BEBIDAS', requires_packaging: false, stock: 50 },
+  { name: 'Cerveza', price: 3.5, category: 'BEBIDAS', requires_packaging: false, stock: 50 }
+];
+
 async function seed() {
   console.log('Cleaning existing database collections...');
   const collectionsToClean = ['products', 'orders', 'order_items', 'payments'];
@@ -66,30 +118,7 @@ async function seed() {
 
   console.log('Seeding Firestore with sample data...');
 
-  const products = [
-    // PLATOS FUERTES
-    { name: 'Filete de Pollo', price: 2.5, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
-    { name: 'Chuleta de Cerdo', price: 3.5, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
-    { name: 'Costilla de Cerdo', price: 4.0, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
-    { name: 'Presa de Pollo', price: 2.5, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
-    { name: 'Pincho de Camarón', price: 3.5, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
-    { name: 'Papi Pollo', price: 2.5, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
-    { name: 'Salchipapa', price: 1.5, category: 'PLATOS FUERTES', requires_packaging: true, stock: 50 },
-    { name: 'Choclo Asado', price: 1.5, category: 'PLATOS FUERTES', requires_packaging: false, stock: 50 },
-
-    // PORCIONES
-    { name: 'Papa', price: 1.0, category: 'PORCIONES', requires_packaging: false, stock: 50 },
-    { name: 'Arroz', price: 1.0, category: 'PORCIONES', requires_packaging: false, stock: 50 },
-    { name: 'Menestra', price: 1.0, category: 'PORCIONES', requires_packaging: false, stock: 50 },
-    // BEBIDAS
-    { name: 'Jarra de Horchata', price: 3.0, category: 'BEBIDAS', requires_packaging: false, stock: 50 },
-    { name: '1/2 Jarra de Horchata', price: 1.5, category: 'BEBIDAS', requires_packaging: false, stock: 50 },
-    { name: 'Vaso de Horchata', price: 0.5, category: 'BEBIDAS', requires_packaging: false, stock: 50 },
-    { name: 'Café', price: 0.75, category: 'BEBIDAS', requires_packaging: false, stock: 50 },
-    { name: 'Cola Personal', price: 0.75, category: 'BEBIDAS', requires_packaging: false, stock: 50 },
-    { name: 'Cola de Litro', price: 1.25, category: 'BEBIDAS', requires_packaging: false, stock: 50 },
-    { name: 'Cerveza', price: 3.5, category: 'BEBIDAS', requires_packaging: false, stock: 50 }
-  ];
+  const products = loadMenu();
 
   const productRefs = [];
   for (const p of products) {
