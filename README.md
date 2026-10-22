@@ -34,6 +34,12 @@ npm run build:apk
 Eso compila la web (`dist/`), la sincroniza con el proyecto Android (`cap sync`)
 y genera el APK de depuración en `android/app/build/outputs/apk/debug/`.
 
+> **Nota sobre Java:** este equipo tiene **JDK 17**, pero Capacitor 8 escribe
+> `JavaVersion.VERSION_21` en `android/app/capacitor.build.gradle` **cada vez que
+> corre `npx cap sync`**, lo que rompe la compilación del APK. Por eso existe el
+> script `sync:android`, que hace el sync y vuelve a dejar Java 17. Usa ese
+> (`npm run sync:android`) en lugar de `npx cap sync` a mano.
+
 ## Scripts útiles
 
 | Comando | Qué hace |
